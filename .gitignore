@@ -1,3 +1,6 @@
+# Don't ever commit Makefile.venv to source - always pull from GitHub.
+Makefile.venv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -5,14 +5,13 @@ SRC_DIR := ./src
 BUILD_DIR := ./build
 
 DIAGRAMS_PY_SRCS := $(shell find $(SRC_DIR) -wholename './src/diagrams/**.py')
-# DIAGRAMS_PY_PNGS := $(DIAGRAMS_PY_SRCS:%=$(subst $(SRC_DIR),$(BUILD_DIR),$(basename %).png))
-DIAGRAMS_PY_PNGS := $(subst $(SRC_DIR)/diagrams,$(BUILD_DIR),$(DIAGRAMS_PY_SRCS:%.py=%.png))
-# DIAGRAMS_PY_PNGS := $(DIAGRAMS_PY_SRCS:%=$(basename %))
+DIAGRAMS_PY_PNGS := $(DIAGRAMS_PY_SRCS:./src/diagrams/%.py=$(BUILD_DIR)/%.png)
 
 .PHONY: build
 build: $(DIAGRAMS_PY_PNGS)
 
-$(BUILD_DIR)/%.png: src/diagrams/%.py venv
+$(DIAGRAMS_PY_PNGS): venv
+$(DIAGRAMS_PY_PNGS): build/%.png: src/diagrams/%.py
 	$(MKDIR_P) $(dir $@)
 	BUILD_DIR=$(BUILD_DIR) $(VENV)/python3 -m $(basename $(subst /,.,$<))
 
