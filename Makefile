@@ -1,30 +1,38 @@
-# Consistently use the Python VENV
-.ONESHELL:
-
 SRC_DIR := ./src
 BUILD_DIR := ./build
 
 DIAGRAMS_PY_SRCS := $(shell find $(SRC_DIR) -wholename './src/diagrams/**.py')
 DIAGRAMS_PY_PNGS := $(DIAGRAMS_PY_SRCS:./src/diagrams/%.py=$(BUILD_DIR)/%.png)
 
-.PHONY: build
-build: $(DIAGRAMS_PY_PNGS)
+.PHONY: all
+all: diagrams_py
 
-$(DIAGRAMS_PY_PNGS): venv
+
+# Notes:
+# * `venv` is technically needed for each PNG, but is included here instead of
+#   directly on the subsequent recipe to not break incremental builds.
+.PHONY: diagrams_py
+diagrams_py: venv $(DIAGRAMS_PY_PNGS)
+
+# Notes:
+# *  The mkdir isn't strictly necessary here; diagrams will handle this. This
+#    is retained purely for clarity.
 $(DIAGRAMS_PY_PNGS): build/%.png: src/diagrams/%.py
-	$(MKDIR_P) $(dir $@)
-	BUILD_DIR=$(BUILD_DIR) $(VENV)/python3 -m $(basename $(subst /,.,$<))
+	@echo Building $@...
+	@ $(MKDIR_P) $(dir $@)
+	@ BUILD_DIR=$(BUILD_DIR) $(VENV)/python3 -m $(basename $(subst /,.,$<))
+
 
 .PHONY: clean
 clean: clean-build clean-venv clean-pycache
 
 .PHONY: clean-build
 clean-build:
-	rm -rf $(BUILD_DIR)
+	@ rm -rf $(BUILD_DIR)
 
 .PHONY: clean-pycache
 clean-pycache:
-	rm -rf **/__pycache__
+	@ rm -rf **/__pycache__
 
 MKDIR_P ?= mkdir -p
 
