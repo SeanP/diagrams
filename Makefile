@@ -1,12 +1,18 @@
 SRC_DIR := ./src
 BUILD_DIR := ./build
 
+.PHONY: all
+all: diagrams_py plantuml
+
+
+################################
+#                              #
+#         Diagrams.py          #
+#                              #
+################################
+
 DIAGRAMS_PY_SRCS := $(shell find $(SRC_DIR) -wholename './src/diagrams/**.py')
 DIAGRAMS_PY_PNGS := $(DIAGRAMS_PY_SRCS:./src/diagrams/%.py=$(BUILD_DIR)/%.png)
-
-.PHONY: all
-all: diagrams_py
-
 
 # Notes:
 # * `venv` is technically needed for each PNG, but is included here instead of
@@ -18,10 +24,46 @@ diagrams_py: venv $(DIAGRAMS_PY_PNGS)
 # *  The mkdir isn't strictly necessary here; diagrams will handle this. This
 #    is retained purely for clarity.
 $(DIAGRAMS_PY_PNGS): build/%.png: src/diagrams/%.py
-	@echo Building $@...
+	@printf "`tput bold`[Diagrams.py]`tput sgr0` Building $@...\n"
 	@ $(MKDIR_P) $(dir $@)
 	@ BUILD_DIR=$(BUILD_DIR) $(VENV)/python3 -m $(basename $(subst /,.,$<))
 
+
+################################
+#                              #
+#           PlantUML           #
+#                              #
+################################
+
+PLANTUML_SRCS := $(shell find $(SRC_DIR) -name '*.plantuml')
+PLANTUML_PNGS := $(PLANTUML_SRCS:./src/diagrams/%.plantuml=$(BUILD_DIR)/%.png)
+
+PLANTUML_PUML_SRCS := $(shell find $(SRC_DIR) -name '*.puml')
+PLANTUML_PUML_PNGS := $(PLANTUML_PUML_SRCS:./src/diagrams/%.puml=$(BUILD_DIR)/%.png)
+
+.PHONY: plantuml
+plantuml: $(PLANTUML_PNGS) $(PLANTUML_PUML_PNGS)
+
+$(PLANTUML_PNGS): build/%.png: src/diagrams/%.plantuml
+	@printf "`tput bold`[PlantUML]`tput sgr0` Building $@...\n"
+	@ $(MKDIR_P) $(dir $@)
+	@ cat $< | plantuml -pipe -tpng > $@
+
+$(PLANTUML_PUML_PNGS): build/%.png: src/diagrams/%.puml
+#	@echo -e PlantUML: Building $@...
+	@printf "`tput bold`[PlantUML]`tput sgr0` Building $@...\n"
+	@ $(MKDIR_P) $(dir $@)
+	@ cat $< | plantuml -pipe -tpng > $@
+
+
+################################
+#                              #
+#          Internals           #
+#                              #
+################################
+
+.SILENT: clean-venv
+.SILENT: venv
 
 .PHONY: clean
 clean: clean-build clean-venv clean-pycache
